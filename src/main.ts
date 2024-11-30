@@ -3,11 +3,15 @@ import { AppModule } from "./app.module";
 import "dotenv/config";
 import { convertToPersianDate } from "./helpers/converToPersianDate";
 import chalk from "chalk";
+import { setUpSwagger } from "./swagger";
 
 const { PORT, NODE_ENV } = process.env;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Setup Swagger at development mode
+  if (NODE_ENV === "development") setUpSwagger(app);
 
   // set prefix for routes
   app.setGlobalPrefix("api");
