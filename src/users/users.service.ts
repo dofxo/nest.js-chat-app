@@ -36,10 +36,19 @@ export class UsersService {
     }
   }
 
-  //TODO: add signin logic
   async signIn({ email, password }) {
-    const newUser = "";
-    return newUser;
+    const user = await this.userModel.findOne({ email, password });
+
+    // check if user exists
+    if (Boolean(user)) {
+      return new SuccessException({
+        message: "کاربر با موفقیت وارد شد",
+        statusCode: 200,
+        data: user,
+      });
+    } else {
+      return new NotFoundException("اطاعات وارد شده صحیح نمی باشد");
+    }
   }
 
   async getAllUsers() {
