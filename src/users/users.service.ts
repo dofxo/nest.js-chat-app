@@ -5,12 +5,13 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { isValidObjectId } from "mongoose";
-import { userSchema } from "../schemas/";
+import { User } from "../schemas/";
 import SuccessException from "../custom-exceptions/success";
+import { passwordMatchToHashedVersion } from "src/helpers/passwordMatchToHashedVersion";
 
 @Injectable()
 export class UsersService {
-  private userModel = userSchema;
+  private userModel = User;
   async signUp({
     name,
     password,
@@ -37,10 +38,17 @@ export class UsersService {
   }
 
   async signIn({ email, password }) {
-    const user = await this.userModel.findOne({ email, password });
+    const user = await this.userModel.findOne({ email });
 
     // check if user exists
     if (Boolean(user)) {
+      const { password: userPassword } = user;
+
+      // check for password from input and hashed password stored in database
+      if (!passwordMatchToHashedVersion(password, userPassword)) {
+        return new NotFoundException("اطاعات وارد شده صحیح نمی باشد");
+      }
+
       return new SuccessException({
         message: "کاربر با موفقیت وارد شد",
         statusCode: 200,
