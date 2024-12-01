@@ -4,17 +4,27 @@ import "dotenv/config";
 import { convertToPersianDate } from "./helpers/converToPersianDate";
 import chalk from "chalk";
 import { setUpSwagger } from "./swagger";
+import { ValidationPipe } from "@nestjs/common";
 
 const { PORT, NODE_ENV } = process.env;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // set prefix for routes
+  app.setGlobalPrefix("api/v1");
+
+  // Enable global validation
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
   // Setup Swagger at development mode
   if (NODE_ENV === "development") setUpSwagger(app);
-
-  // set prefix for routes
-  app.setGlobalPrefix("api");
 
   await app.listen(PORT ?? 3500, () =>
     console.log(
