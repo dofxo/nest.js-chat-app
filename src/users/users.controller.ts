@@ -29,17 +29,16 @@ export class UsersController {
   }
 
   @Post("sign-in")
-  @ApiOperation({ summary: "Create a new user" })
+  @ApiOperation({ summary: "Login existing user" })
   @ApiBody({
     type: signInDto,
   })
   @ApiResponse({
     status: 201,
-    description: "User successfully signed up",
+    description: "User successfully signed in",
     type: signInDto,
   })
   async signIn(@Body() signInDto: signInDto) {
-    //TODO: add signin logic
     const { password, email } = signInDto;
     const user = await this.usersService.signIn({ password, email });
     return user;
@@ -48,7 +47,7 @@ export class UsersController {
   @Get()
   @ApiOperation({ summary: "Get All Users" })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: "Users fetched successfully",
   })
   async getUsers() {
