@@ -20,7 +20,7 @@ export class UsersController {
   })
   async signUp(@Body() signUpDto: signUpDto) {
     const { name, password, email } = signUpDto;
-    const user = await this.usersService.signUpDto({
+    const user = await this.usersService.signUp({
       email,
       password,
       name,
@@ -41,7 +41,7 @@ export class UsersController {
   async signIn(@Body() signInDto: signInDto) {
     //TODO: add signin logic
     const { password, email } = signInDto;
-    const user = await this.usersService.signInDto({ password, email });
+    const user = await this.usersService.signIn({ password, email });
     return user;
   }
 

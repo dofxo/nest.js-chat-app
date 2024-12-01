@@ -1,15 +1,17 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import { isValidObjectId } from "mongoose";
 import { userSchema } from "../schemas/";
+import SuccessException from "../custom-exceptions/success";
 
 @Injectable()
 export class UsersService {
   private userModel = userSchema;
-  async signUpDto({
+  async signUp({
     name,
     password,
     email,
@@ -18,22 +20,36 @@ export class UsersService {
     password: string;
     email: string;
   }) {
-    //TODO: add signup logic
-    const newUser = new this.userModel({ name, password, email });
-    newUser.save();
+    const isUserExists = await this.userModel.findOne({ email });
 
-    return newUser;
+    // check if user is new
+    if (!Boolean(isUserExists)) {
+      const newUser = new this.userModel({ name, password, email });
+      newUser.save();
+      return new SuccessException({
+        message: "کاربر با موفقیت ساخته شد",
+        statusCode: 201,
+        data: newUser,
+      });
+    } else {
+      return new ConflictException("کاربر از قبل وجود دارد");
+    }
   }
 
   //TODO: add signin logic
-  async signInDto({ email, password }) {
+  async signIn({ email, password }) {
     const newUser = "";
     return newUser;
   }
 
   async getAllUsers() {
     const users = await this.userModel.find();
-    return users;
+
+    return new SuccessException({
+      message: "کاربران با موفقیت دریافت شدند",
+      statusCode: 200,
+      data: users,
+    });
   }
 
   async getUserById(userId: string) {
@@ -46,7 +62,10 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException("User Not Found");
     }
-
-    return user;
+    return new SuccessException({
+      message: "کاربر با موفقیت دریافت شد",
+      statusCode: 200,
+      data: user,
+    });
   }
 }
