@@ -97,7 +97,6 @@ export class UsersController {
     description: "User logged out successfully",
   })
   logout(@Res() res: Response, @Req() req) {
-    console.log(req.cookies.token);
     if (req.cookies.token) {
       res.clearCookie("token");
       res.send(new SuccessException({ message: "کاربر با موفقیت خارج شد" }));

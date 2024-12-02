@@ -67,11 +67,11 @@ export class UsersService {
 
       return new SuccessException({
         message: "کاربر با موفقیت وارد شد",
-        statusCode: 200,
+        statusCode: 201,
         data: user,
       });
     } else {
-      return new NotFoundException("اطاعات وارد شده صحیح نمی باشد");
+      return new NotFoundException("کاربری با این اطلاعات وجود ندارد");
     }
   }
 
