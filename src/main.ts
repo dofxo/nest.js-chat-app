@@ -5,7 +5,7 @@ import { convertToPersianDate } from "./helpers/converToPersianDate";
 import chalk from "chalk";
 import { setUpSwagger } from "./swagger";
 import { ValidationPipe } from "@nestjs/common";
-
+import * as cookieParser from "cookie-parser";
 const { PORT, NODE_ENV } = process.env;
 
 async function bootstrap() {
@@ -13,6 +13,9 @@ async function bootstrap() {
 
   // set prefix for routes
   app.setGlobalPrefix("api/v1");
+
+  // allow parsing cookies
+  app.use(cookieParser());
 
   // Enable global validation
   app.useGlobalPipes(

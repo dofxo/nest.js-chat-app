@@ -20,7 +20,15 @@ export class UsersService {
     name: string;
     password: string;
     email: string;
-  }) {
+  }): Promise<{
+    message: any;
+    data?: {
+      name: string;
+      email: string;
+      password: string;
+    };
+    statusCode?: number;
+  }> {
     const isUserExists = await this.userModel.findOne({ email });
 
     // check if user is new
@@ -37,14 +45,22 @@ export class UsersService {
     }
   }
 
-  async signIn({ email, password }) {
+  async signIn({ email, password }): Promise<{
+    message: any;
+    data?: {
+      name: string;
+      email: string;
+      password: string;
+    };
+    statusCode?: number;
+  }> {
     const user = await this.userModel.findOne({ email });
 
     // check if user exists
     if (Boolean(user)) {
       const { password: userPassword } = user;
 
-      // check for password from input and hashed password stored in database
+      // check for password matching
       if (!passwordMatchToHashedVersion(password, userPassword)) {
         return new NotFoundException("اطاعات وارد شده صحیح نمی باشد");
       }
@@ -83,6 +99,21 @@ export class UsersService {
       message: "کاربر با موفقیت دریافت شد",
       statusCode: 200,
       data: user,
+    });
+  }
+
+  async removeUserById(userId: string) {
+    if (!isValidObjectId(userId)) {
+      throw new BadRequestException("Invalid user ID format");
+    }
+    const user = await this.userModel.deleteOne({ _id: userId });
+
+    if (user.deletedCount === 0) {
+      throw new NotFoundException("User Not Found");
+    }
+    return new SuccessException({
+      message: "کاربر با موفقیت حذف شد",
+      statusCode: 200,
     });
   }
 }
