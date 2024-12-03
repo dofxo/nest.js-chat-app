@@ -85,12 +85,12 @@ export class UsersService {
     });
   }
 
-  async getUserById(userId: string) {
-    if (!isValidObjectId(userId)) {
-      throw new BadRequestException("Invalid user ID format");
+  async getUserByEmail(userEmail: string) {
+    if (!userEmail) {
+      throw new BadRequestException("ایمیل مورد نظر موجود نمی باشد");
     }
 
-    const user = await this.userModel.findById(userId);
+    const user = await this.userModel.findOne({ email: userEmail });
 
     if (!user) {
       throw new NotFoundException("User Not Found");
@@ -99,6 +99,17 @@ export class UsersService {
       message: "کاربر با موفقیت دریافت شد",
       statusCode: 200,
       data: user,
+    });
+  }
+  async updateUserByEmail(userEmail: string, data: { name: string }) {
+    if (!userEmail) {
+      throw new BadRequestException("ایمیل مورد نظر موجود نمی باشد");
+    }
+    await this.userModel.updateOne({ email: userEmail }, data);
+
+    return new SuccessException({
+      message: "اطلاعات کاربر با موفقیت آپدیت شد",
+      statusCode: 200,
     });
   }
 

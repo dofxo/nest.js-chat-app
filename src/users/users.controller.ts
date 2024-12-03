@@ -6,17 +6,21 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
   Req,
   Res,
+  UseGuards,
 } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
 import signUpDto from "./dto/signUp.dto";
 import signInDto from "./dto/signIn.dto";
+import updateDto from "./dto/updateDto.dto";
 import { JwtService } from "@nestjs/jwt";
 import { Response } from "express";
 import { setCookie } from "src/helpers/setCookie";
 import SuccessException from "src/custom-exceptions/success";
+import AuthGuard from "src/guards/auth.guard";
 
 @Controller("users")
 export class UsersController {
@@ -106,6 +110,7 @@ export class UsersController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Get()
   @ApiOperation({ summary: "Get All Users" })
   @ApiResponse({
@@ -117,20 +122,47 @@ export class UsersController {
     return users;
   }
 
-  @Get(":id")
+  @UseGuards(AuthGuard)
+  @Get("/user")
   @ApiOperation({ summary: "Get one user" })
-  @ApiParam({ name: "id", type: String })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: "User fetched successfully",
   })
-  async getUser(@Param("id") id: string) {
-    const user = await this.usersService.getUserById(id);
+  async getUser(@Req() req) {
+    const token = req.cookies.token;
+    const decoded = this.jwtService.decode(token);
+
+    const user = await this.usersService.getUserByEmail(decoded.email);
     return user;
   }
 
+  @UseGuards(AuthGuard)
+  @Put("/user")
+  @ApiOperation({ summary: "Update user data" })
+  @ApiResponse({
+    status: 200,
+    description: "User data updated successfully",
+  })
+  async updateUser(@Req() req, @Body() updateDto: updateDto) {
+    const token = req.cookies.token;
+    const decoded = this.jwtService.decode(token);
+
+    const { name } = updateDto;
+
+    const user = await this.usersService.updateUserByEmail(decoded.email, {
+      name,
+    });
+
+    return user;
+  }
+
+  @UseGuards(AuthGuard)
   @Delete(":id")
   @ApiOperation({ summary: "Delete one user" })
+  @ApiBody({
+    type: signInDto,
+  })
   @ApiParam({ name: "id", type: String })
   @ApiResponse({
     status: 200,
