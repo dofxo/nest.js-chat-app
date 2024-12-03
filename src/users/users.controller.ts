@@ -160,9 +160,6 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Delete(":id")
   @ApiOperation({ summary: "Delete one user" })
-  @ApiBody({
-    type: signInDto,
-  })
   @ApiParam({ name: "id", type: String })
   @ApiResponse({
     status: 200,
