@@ -45,7 +45,7 @@ export class UsersService {
     }
   }
 
-  async signIn({ email, password }): Promise<{
+  async logIn({ email, password }): Promise<{
     message: any;
     data?: {
       name: string;

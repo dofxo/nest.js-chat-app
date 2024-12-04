@@ -4,6 +4,7 @@ import { AppService } from "./app.service";
 import { UsersModule } from "./users/users.module";
 import { DatabaseService } from "./database/database.service";
 import { JwtModule } from "@nestjs/jwt";
+import { SocketService } from './socket/socket.service';
 import "dotenv/config";
 
 const { JWT_SECRET_KEY } = process.env;
@@ -18,7 +19,7 @@ const { JWT_SECRET_KEY } = process.env;
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, DatabaseService],
+  providers: [AppService, DatabaseService, SocketService],
 })
 export class AppModule {
   constructor(private readonly databaseService: DatabaseService) {}

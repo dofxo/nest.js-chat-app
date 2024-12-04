@@ -14,13 +14,13 @@ import {
 import { UsersService } from "./users.service";
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
 import signUpDto from "./dto/signUp.dto";
-import signInDto from "./dto/signIn.dto";
 import updateDto from "./dto/updateDto.dto";
 import { JwtService } from "@nestjs/jwt";
 import { Response } from "express";
 import { setCookie } from "src/helpers/setCookie";
 import SuccessException from "src/custom-exceptions/success";
 import AuthGuard from "src/guards/auth.guard";
+import logInDto from "./dto/logIn.dto";
 
 @Controller("users")
 export class UsersController {
@@ -67,20 +67,20 @@ export class UsersController {
     return res.json({ user });
   }
 
-  @Post("sign-in")
+  @Post("log-in")
   @ApiOperation({ summary: "Login existing user" })
   @ApiBody({
-    type: signInDto,
+    type: logInDto,
   })
   @ApiResponse({
     status: 201,
-    description: "User successfully signed in",
-    type: signInDto,
+    description: "User successfully logged in",
+    type: logInDto,
   })
-  async signIn(@Body() signInDto: signInDto, @Res() res: Response) {
-    const { password, email } = signInDto;
+  async signIn(@Body() logInDto: logInDto, @Res() res: Response) {
+    const { password, email } = logInDto;
 
-    const user = await this.usersService.signIn({ password, email });
+    const user = await this.usersService.logIn({ password, email });
 
     if (user.data) {
       const payload = {
