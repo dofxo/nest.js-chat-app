@@ -13,16 +13,11 @@ export class SocketService {
     this.io = new Server(server, {
       cors: {
         origin: "*",
+        credentials: true, // Ensure credentials (cookies) are accepted
       },
     });
 
     this.io.on("connection", (socket) => {
-      console.log("A client connected:", socket.id);
-
-      socket.on("disconnect", (reason) => {
-        console.log(`Client disconnected: ${socket.id} (Reason: ${reason})`);
-      });
-
       const rawCookie = socket.handshake.headers.cookie || "";
       const parsedCookies = cookie.parse(rawCookie);
 
@@ -35,15 +30,16 @@ export class SocketService {
 
   newMessage(socket: any, token: string) {
     socket.on("message", (message: any) => {
-      let name;
+      let name: string;
+
       if (token) {
         name = this.jwtService.decode(token).name;
       } else {
         name = "Anonymous";
       }
 
-      // send incoming message to all clients
-      this.io.emit("message", {
+      // Send incoming message to all clients except the sender
+      socket.broadcast.emit("message", {
         message,
         date: new Date(),
         username: name,
