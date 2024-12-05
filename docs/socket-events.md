@@ -15,18 +15,12 @@ This event is triggered when a user sends a message. The server broadcasts the m
 ### Expected Payload:
 
 ```json
-{
-  "message": "Hello, World!",
-  "token": "jwt_token_here"
-}
+"Hello, World!"
 ```
 
-- `message`: The content of the message sent by the user.
-- `token`: JWT token used for user authentication (optional, will be decoded to get the user's name). **Note**: The token must be sent via cookies, as the server checks for the token in the request headers.
+- `message`: The content of the message sent by the user. Only the message string is needed—no need to include any additional data like the token.
 
 ### Server Response:
-
-The server will broadcast the following to all connected clients (except the sender):
 
 ```json
 {
@@ -52,16 +46,12 @@ This event is triggered when a user starts typing. The server broadcasts the typ
 ### Expected Payload:
 
 ```json
-{
-  "token": "jwt_token_here"
-}
+"typing"
 ```
 
-- `token`: JWT token used for user authentication (optional, will be decoded to get the user's name). **Note**: The token must be sent via cookies, as the server checks for the token in the request headers.
+- The payload simply indicates that the user is typing. No need to include the token in the payload, as it will be automatically retrieved from the cookies set after sign-up.
 
 ### Server Response:
-
-The server will broadcast the following to all connected clients:
 
 ```json
 {
@@ -73,58 +63,6 @@ The server will broadcast the following to all connected clients:
 
 ---
 
-## 3. **Connection Event**
-
-**Event Name:** `connection`
-
-### Description:
-
-Triggered when a new user connects to the WebSocket server. The server authenticates the user using the JWT token (if available) and sets up event listeners for `message` and `typing`.
-
-### Expected Payload:
-
-- JWT token in cookies (`token`).
-
-### Server Response:
-
-No direct response is sent. The server will start listening for the `message` and `typing` events after successful connection.
-
----
-
-## 4. **Disconnection Event**
-
-**Event Name:** `disconnect`
-
-### Description:
-
-Triggered when a user disconnects from the WebSocket server. The server cleans up the user's session.
-
-### Expected Payload:
-
-- None
-
-### Server Response:
-
-No response is sent. The user's session will be terminated on the server.
-
----
-
-## How to Use:
-
-- **WebSocket Connection**: Connect to the WebSocket server using a WebSocket client (e.g., in your frontend app or using a tool like Postman).
-  
-- **Credentials (Cookies)**: Ensure that you send the JWT token as part of your cookies. This allows the server to authenticate the user and identify the sender for events like `message` and `typing`.
-
----
-
-### Troubleshooting
-
-- If the `token` is invalid or not provided, the server will treat the user as "Anonymous" for events that require user identification (e.g., `message` and `typing`).
-  
-- Make sure that **cookies are enabled** and **credentials are allowed** in your WebSocket client when connecting to the server. Without sending credentials via cookies, the server won't be able to decode the token.
-
----
-
 ## Example: Sending a Message
 
 To send a message, connect to the WebSocket server and emit the `message` event with the following data:
@@ -133,10 +71,7 @@ To send a message, connect to the WebSocket server and emit the `message` event 
 const socket = io("http://localhost:3000", {
   withCredentials: true, // Allow cookies to be sent with the connection
 });
-socket.emit("message", {
-  message: "Hello, World!",
-  token: "jwt_token_here", // This token should be sent via cookies for authentication
-});
+socket.emit("message", "Hello, World!"); // Only message string is needed
 ```
 
 **Server Response**:
@@ -160,7 +95,7 @@ To indicate that you're typing, connect to the WebSocket server and emit the `ty
 const socket = io("http://localhost:3000", {
   withCredentials: true, // Allow cookies to be sent with the connection
 });
-socket.emit("typing", { token: "jwt_token_here" });
+socket.emit("typing");
 ```
 
 **Server Response**:
