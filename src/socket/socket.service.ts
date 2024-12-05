@@ -25,6 +25,26 @@ export class SocketService {
 
       // listens for new message
       this.newMessage(socket, token);
+
+      // listens for typings
+      this.isTypingStatus(socket, token);
+    });
+  }
+
+  isTypingStatus(socket: any, token: string) {
+    socket.on("typing", () => {
+      let name: string;
+
+      if (token) {
+        name = this.jwtService.decode(token).name;
+      } else {
+        name = "Anonymous";
+      }
+
+      // Send user typing status
+      socket.broadcast.emit("typing", {
+        username: name,
+      });
     });
   }
 
