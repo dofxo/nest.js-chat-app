@@ -14,7 +14,7 @@ const { PORT, NODE_ENV } = process.env;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Set up global configurations
+  // Global configurations
   app.setGlobalPrefix("api/v1");
   app.use(cookieParser());
   app.useGlobalPipes(
@@ -25,21 +25,26 @@ async function bootstrap() {
     }),
   );
 
-  // Setup Swagger in development mode
+  // Setup Swagger
   if (NODE_ENV === "development") setUpSwagger(app);
 
-  // Create an HTTP server
+  // Create HTTP server explicitly
   const httpServer = createServer(app.getHttpAdapter().getInstance());
 
-  // Initialize the Socket.IO service
+  // Initialize Socket.IO
   const socketService = app.get(SocketService);
   socketService.initialize(httpServer);
 
-  // Start the HTTP server
+  // Ensure NestJS is initialized properly
+  await app.init();
+
+  // Start the server
   httpServer.listen(PORT ?? 3500, () =>
     console.log(
       chalk.green(
-        `App is running on ${NODE_ENV} mode at ${chalk.redBright(`http://localhost:${PORT}`)} | ${chalk.yellow(convertToPersianDate(new Date()))}`,
+        `App is running on ${NODE_ENV} mode at ${chalk.redBright(
+          `http://localhost:${PORT}`,
+        )} | ${chalk.yellow(convertToPersianDate(new Date()))}`,
       ),
     ),
   );
