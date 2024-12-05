@@ -1,128 +1,173 @@
-WebSocket Events Documentation
+# WebSocket Events Documentation
 
 This document provides descriptions of the WebSocket events used in the application.
 
-1. Message Event
+---
 
-Event Name: message
-Description:
+## 1. **Message Event**
+
+**Event Name:** `message`
+
+### Description:
 
 This event is triggered when a user sends a message. The server broadcasts the message to all other connected clients, except for the sender.
-Expected Payload:
 
+### Expected Payload:
+
+```json
 {
-"message": "Hello, World!",
-"token": "jwt_token_here"
+  "message": "Hello, World!",
+  "token": "jwt_token_here"
 }
+```
 
-    message: The content of the message sent by the user.
-    token: JWT token used for user authentication (optional, will be decoded to get the user's name). Note: The token must be sent via cookies, as the server checks for the token in the request headers.
+- `message`: The content of the message sent by the user.
+- `token`: JWT token used for user authentication (optional, will be decoded to get the user's name). **Note**: The token must be sent via cookies, as the server checks for the token in the request headers.
 
-Server Response:
+### Server Response:
 
 The server will broadcast the following to all connected clients (except the sender):
 
+```json
 {
-"message": "Hello, World!",
-"username": "UserName",
-"date": "2024-12-06T12:00:00Z"
+  "message": "Hello, World!",
+  "username": "UserName",
+  "date": "2024-12-06T12:00:00Z"
 }
+```
 
-    username: Name of the user sending the message (decoded from JWT token).
-    date: The timestamp of when the message was sent.
+- `username`: Name of the user sending the message (decoded from JWT token).
+- `date`: The timestamp of when the message was sent.
 
-2. Typing Status Event
+---
 
-Event Name: typing
-Description:
+## 2. **Typing Status Event**
+
+**Event Name:** `typing`
+
+### Description:
 
 This event is triggered when a user starts typing. The server broadcasts the typing status to all other connected clients, indicating the user who is typing.
-Expected Payload:
 
+### Expected Payload:
+
+```json
 {
-"token": "jwt_token_here"
+  "token": "jwt_token_here"
 }
+```
 
-    token: JWT token used for user authentication (optional, will be decoded to get the user's name). Note: The token must be sent via cookies, as the server checks for the token in the request headers.
+- `token`: JWT token used for user authentication (optional, will be decoded to get the user's name). **Note**: The token must be sent via cookies, as the server checks for the token in the request headers.
 
-Server Response:
+### Server Response:
 
 The server will broadcast the following to all connected clients:
 
+```json
 {
-"username": "UserName"
+  "username": "UserName"
 }
+```
 
-    username: Name of the user who is typing (decoded from JWT token).
+- `username`: Name of the user who is typing (decoded from JWT token).
 
-3. Connection Event
+---
 
-Event Name: connection
-Description:
+## 3. **Connection Event**
 
-Triggered when a new user connects to the WebSocket server. The server authenticates the user using the JWT token (if available) and sets up event listeners for message and typing.
-Expected Payload:
+**Event Name:** `connection`
 
-    JWT token in cookies (token).
+### Description:
 
-Server Response:
+Triggered when a new user connects to the WebSocket server. The server authenticates the user using the JWT token (if available) and sets up event listeners for `message` and `typing`.
 
-No direct response is sent. The server will start listening for the message and typing events after successful connection. 4. Disconnection Event
+### Expected Payload:
 
-Event Name: disconnect
-Description:
+- JWT token in cookies (`token`).
+
+### Server Response:
+
+No direct response is sent. The server will start listening for the `message` and `typing` events after successful connection.
+
+---
+
+## 4. **Disconnection Event**
+
+**Event Name:** `disconnect`
+
+### Description:
 
 Triggered when a user disconnects from the WebSocket server. The server cleans up the user's session.
-Expected Payload:
 
-    None
+### Expected Payload:
 
-Server Response:
+- None
+
+### Server Response:
 
 No response is sent. The user's session will be terminated on the server.
-How to Use:
 
-    WebSocket Connection: Connect to the WebSocket server using a WebSocket client (e.g., in your frontend app or using a tool like Postman).
+---
 
-    Credentials (Cookies): Ensure that you send the JWT token as part of your cookies. This allows the server to authenticate the user and identify the sender for events like message and typing.
+## How to Use:
 
-Troubleshooting
+- **WebSocket Connection**: Connect to the WebSocket server using a WebSocket client (e.g., in your frontend app or using a tool like Postman).
+  
+- **Credentials (Cookies)**: Ensure that you send the JWT token as part of your cookies. This allows the server to authenticate the user and identify the sender for events like `message` and `typing`.
 
-    If the token is invalid or not provided, the server will treat the user as "Anonymous" for events that require user identification (e.g., message and typing).
+---
 
-    Make sure that cookies are enabled and credentials are allowed in your WebSocket client when connecting to the server. Without sending credentials via cookies, the server won't be able to decode the token.
+### Troubleshooting
 
-Example: Sending a Message
+- If the `token` is invalid or not provided, the server will treat the user as "Anonymous" for events that require user identification (e.g., `message` and `typing`).
+  
+- Make sure that **cookies are enabled** and **credentials are allowed** in your WebSocket client when connecting to the server. Without sending credentials via cookies, the server won't be able to decode the token.
 
-To send a message, connect to the WebSocket server and emit the message event with the following data:
+---
 
+## Example: Sending a Message
+
+To send a message, connect to the WebSocket server and emit the `message` event with the following data:
+
+```js
 const socket = io("http://localhost:3000", {
-withCredentials: true, // Allow cookies to be sent with the connection
+  withCredentials: true, // Allow cookies to be sent with the connection
 });
 socket.emit("message", {
-message: "Hello, World!",
-token: "jwt_token_here", // This token should be sent via cookies for authentication
+  message: "Hello, World!",
+  token: "jwt_token_here", // This token should be sent via cookies for authentication
 });
+```
 
-Server Response: The server will broadcast the message to all other clients, which will receive:
+**Server Response**:
+The server will broadcast the message to all other clients, which will receive:
 
+```json
 {
-"message": "Hello, World!",
-"username": "UserName",
-"date": "2024-12-06T12:00:00Z"
+  "message": "Hello, World!",
+  "username": "UserName",
+  "date": "2024-12-06T12:00:00Z"
 }
+```
 
-Example: Typing Event
+---
 
-To indicate that you're typing, connect to the WebSocket server and emit the typing event:
+## Example: Typing Event
 
+To indicate that you're typing, connect to the WebSocket server and emit the `typing` event:
+
+```js
 const socket = io("http://localhost:3000", {
-withCredentials: true, // Allow cookies to be sent with the connection
+  withCredentials: true, // Allow cookies to be sent with the connection
 });
 socket.emit("typing", { token: "jwt_token_here" });
+```
 
-Server Response: The server will broadcast the typing status to all other clients, which will receive:
+**Server Response**:
+The server will broadcast the typing status to all other clients, which will receive:
 
+```json
 {
-"username": "UserName"
+  "username": "UserName"
 }
+```
