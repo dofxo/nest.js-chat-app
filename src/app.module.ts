@@ -4,8 +4,9 @@ import { AppService } from "./app.service";
 import { UsersModule } from "./users/users.module";
 import { DatabaseService } from "./database/database.service";
 import { JwtModule } from "@nestjs/jwt";
-import { SocketService } from './socket/socket.service';
+import { SocketService } from "./socket/socket.service";
 import "dotenv/config";
+import AuthGuard from "./guards/auth.guard";
 
 const { JWT_SECRET_KEY } = process.env;
 
@@ -19,7 +20,7 @@ const { JWT_SECRET_KEY } = process.env;
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, DatabaseService, SocketService],
+  providers: [AppService, DatabaseService, SocketService, AuthGuard],
 })
 export class AppModule {
   constructor(private readonly databaseService: DatabaseService) {}

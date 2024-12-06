@@ -11,7 +11,7 @@ const { JWT_SECRET_CODE } = process.env;
 
 @Injectable()
 export default class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(private jwtService?: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -32,5 +32,20 @@ export default class AuthGuard implements CanActivate {
       throw new UnauthorizedException("Invalid token");
     }
     return true;
+  }
+
+  async isValidToken(token: string): Promise<boolean> {
+    if (!token) {
+      throw new UnauthorizedException("No token found");
+    }
+
+    try {
+      this.jwtService.verifyAsync(token, {
+        secret: JWT_SECRET_CODE,
+      });
+      return true;
+    } catch (error) {
+      throw new UnauthorizedException("Invalid token");
+    }
   }
 }

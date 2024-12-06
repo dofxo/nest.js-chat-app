@@ -1,42 +1,52 @@
 import { Injectable } from "@nestjs/common";
 import { Server } from "socket.io";
 import * as cookie from "cookie";
+import AuthGuard from "src/guards/auth.guard";
 import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class SocketService {
   private io: Server;
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly authGuard: AuthGuard,
+  ) {}
 
   initialize(server: any) {
     this.io = new Server(server, {
       cors: {
         origin: "*",
-        credentials: true, // Ensure credentials (cookies) are accepted
+        credentials: true,
       },
     });
 
-    this.io.on("connection", (socket) => {
-      const rawCookie = socket.handshake.headers.cookie || "";
-      const parsedCookies = cookie.parse(rawCookie);
-      const token = parsedCookies.token;
+    this.io.on("connection", async (socket) => {
+      try {
+        const rawCookie = socket.handshake.headers.cookie || "";
+        const parsedCookies = cookie.parse(rawCookie);
+        const token = parsedCookies.token;
 
-      // listens for new message
-      this.newMessage(socket, token);
+        // Validate token using AuthGuard
+        const isValid = await this.authGuard.isValidToken(token);
 
-      // listens for typing status
-      this.isTypingStatus(socket, token);
+        if (!isValid) {
+          socket.disconnect(true);
+          return;
+        }
 
-      // listens for joining a room
-      this.joinRoom(socket, token);
-
-      // listens for leaving a room
-      this.leaveRoom(socket, token);
+        // Add event listeners
+        this.newMessage(socket, token);
+        this.isTypingStatus(socket, token);
+        this.joinRoom(socket, token);
+        this.leaveRoom(socket, token);
+      } catch (error) {
+        // Disconnect the socket if token validation fails
+        socket.disconnect(true);
+      }
     });
   }
 
-  // Utility function to get the username from the token
   private getUserToken(token: string): { name: string; avatar?: string } {
     if (token) {
       const decoded = this.jwtService.decode(token) as { name: string };
@@ -51,7 +61,6 @@ export class SocketService {
       const { name } = this.getUserToken(token);
 
       if (room) {
-        // Emit typing status to the specified room
         socket.to(room).emit("typing", { username: name });
       }
     });
@@ -62,7 +71,6 @@ export class SocketService {
       const { room, message } = data;
       const { name, avatar } = this.getUserToken(token);
 
-      // Send incoming message to all clients in the room except the sender
       socket.to(room).emit("message", {
         message,
         date: new Date(),
@@ -76,10 +84,8 @@ export class SocketService {
     socket.on("joinRoom", (room: string) => {
       const { name } = this.getUserToken(token);
 
-      // Add the user to the specified room
       socket.join(room);
 
-      // Notify others in the room about the new user
       socket.to(room).emit("userJoined", {
         username: name,
       });
@@ -90,10 +96,8 @@ export class SocketService {
     socket.on("leaveRoom", (room: string) => {
       const { name } = this.getUserToken(token);
 
-      // Remove user from the room
       socket.leave(room);
 
-      // Notify others in the room about the user leaving
       socket.to(room).emit("userLeft", {
         name,
       });
