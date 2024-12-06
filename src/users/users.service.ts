@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { isValidObjectId } from "mongoose";
-import { User } from "../schemas/";
+import { User } from "../schemas/users";
 import SuccessException from "../custom-exceptions/success";
 import { passwordMatchToHashedVersion } from "src/helpers/passwordMatchToHashedVersion";
 

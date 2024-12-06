@@ -3,6 +3,7 @@ import { Server } from "socket.io";
 import * as cookie from "cookie";
 import AuthGuard from "src/guards/auth.guard";
 import { JwtService } from "@nestjs/jwt";
+import { ChatroomsService } from "../chatrooms/chatrooms.service";
 
 @Injectable()
 export class SocketService {
@@ -11,6 +12,7 @@ export class SocketService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly authGuard: AuthGuard,
+    private readonly chatroomsService: ChatroomsService,
   ) {}
 
   initialize(server: any) {
@@ -36,7 +38,7 @@ export class SocketService {
         }
 
         // Add event listeners
-        this.newMessage(socket, token);
+        this.addMessage(socket, token);
         this.isTypingStatus(socket, token);
         this.joinRoom(socket, token);
         this.leaveRoom(socket, token);
@@ -56,6 +58,32 @@ export class SocketService {
     }
   }
 
+  // Listen to 'addMessage' event to add messages to a chatroom
+  addMessage(socket: any, token: string) {
+    socket.on("message", async (data: { room: string; message: string }) => {
+      const { room, message } = data;
+      const { name, avatar } = this.getUserToken(token);
+
+      try {
+        await this.chatroomsService.addMessage(room, {
+          content: message,
+          authorData: { name, avatar },
+        });
+
+        // Emit the new message to all connected clients in the room
+        socket.to(room).emit("message", {
+          message,
+          date: new Date(),
+          username: name,
+          avatar,
+        });
+      } catch (error) {
+        console.error(error);
+        socket.emit("error", { message: error.message });
+      }
+    });
+  }
+
   isTypingStatus(socket: any, token: string) {
     socket.on("typing", (room: string) => {
       const { name } = this.getUserToken(token);
@@ -66,26 +94,11 @@ export class SocketService {
     });
   }
 
-  newMessage(socket: any, token: string) {
-    socket.on("message", (data: any) => {
-      const { room, message } = data;
-      const { name, avatar } = this.getUserToken(token);
-
-      socket.to(room).emit("message", {
-        message,
-        date: new Date(),
-        username: name,
-        avatar,
-      });
-    });
-  }
-
   joinRoom(socket: any, token: string) {
     socket.on("joinRoom", (room: string) => {
       const { name } = this.getUserToken(token);
 
       socket.join(room);
-
       socket.to(room).emit("userJoined", {
         username: name,
       });
@@ -97,7 +110,6 @@ export class SocketService {
       const { name } = this.getUserToken(token);
 
       socket.leave(room);
-
       socket.to(room).emit("userLeft", {
         name,
       });
