@@ -12,12 +12,17 @@ import SuccessException from "src/custom-exceptions/success";
 export class ChatroomsService {
   // Create a new chatroom
   async createChatroom(name: string): Promise<IChatroom> {
+    // Check if the chatroom already exists
     const existingChatroom = await Chatroom.findOne({ name });
+
     if (existingChatroom) {
-      throw new BadRequestException(`Chatroom ${name} already exists.`);
+      // If it exists, return it without creating a new one
+      return existingChatroom;
     }
 
-    return Chatroom.create({ name });
+    // If it doesn't exist, create a new chatroom
+    const newChatroom = await Chatroom.create({ name });
+    return newChatroom;
   }
 
   async getChatrooms() {
