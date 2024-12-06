@@ -37,18 +37,18 @@ export class SocketService {
   }
 
   // Utility function to get the username from the token
-  private getUsername(token: string): string {
+  private getUserToken(token: string): { name: string; avatar?: string } {
     if (token) {
       const decoded = this.jwtService.decode(token) as { name: string };
-      return decoded.name;
+      return decoded;
     } else {
-      return "Anonymous";
+      return { name: "Anonymous" };
     }
   }
 
   isTypingStatus(socket: any, token: string) {
     socket.on("typing", (room: string) => {
-      const name = this.getUsername(token);
+      const { name } = this.getUserToken(token);
 
       if (room) {
         // Emit typing status to the specified room
@@ -60,20 +60,21 @@ export class SocketService {
   newMessage(socket: any, token: string) {
     socket.on("message", (data: any) => {
       const { room, message } = data;
-      const name = this.getUsername(token);
+      const { name, avatar } = this.getUserToken(token);
 
       // Send incoming message to all clients in the room except the sender
       socket.to(room).emit("message", {
         message,
         date: new Date(),
         username: name,
+        avatar,
       });
     });
   }
 
   joinRoom(socket: any, token: string) {
     socket.on("joinRoom", (room: string) => {
-      const name = this.getUsername(token);
+      const { name } = this.getUserToken(token);
 
       // Add the user to the specified room
       socket.join(room);
@@ -87,7 +88,7 @@ export class SocketService {
 
   leaveRoom(socket: any, token: string) {
     socket.on("leaveRoom", (room: string) => {
-      const name = this.getUsername(token);
+      const { name } = this.getUserToken(token);
 
       // Remove user from the room
       socket.leave(room);

@@ -9,10 +9,18 @@ import {
   Put,
   Req,
   Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import { UsersService } from "./users.service";
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+} from "@nestjs/swagger";
 import signUpDto from "./dto/signUp.dto";
 import updateDto from "./dto/updateDto.dto";
 import { JwtService } from "@nestjs/jwt";
@@ -21,6 +29,9 @@ import { setCookie } from "src/helpers/setCookie";
 import SuccessException from "src/custom-exceptions/success";
 import AuthGuard from "src/guards/auth.guard";
 import logInDto from "./dto/logIn.dto";
+import { diskStorage } from "multer";
+import { FileInterceptor } from "@nestjs/platform-express";
+import * as path from "path";
 
 @Controller("users")
 export class UsersController {
@@ -77,7 +88,7 @@ export class UsersController {
     description: "User successfully logged in",
     type: logInDto,
   })
-  async signIn(@Body() logInDto: logInDto, @Res() res: Response) {
+  async logIn(@Body() logInDto: logInDto, @Res() res: Response) {
     const { password, email } = logInDto;
 
     const user = await this.usersService.logIn({ password, email });
@@ -86,6 +97,7 @@ export class UsersController {
       const payload = {
         name: user.data.name,
         email: user.data.email,
+        avatar: user.data.avatar,
       };
       const token = await setCookie(res, this.jwtService, payload);
       return res.json({ user, token });
@@ -104,7 +116,6 @@ export class UsersController {
     if (req.cookies.token) {
       res.clearCookie("token");
       res.send(new SuccessException({ message: "کاربر با موفقیت خارج شد" }));
-      //TODO: redirect to home page later
     } else {
       res.send(new NotFoundException("کاربری وارد حساب کاربری خود نشده است"));
     }
@@ -139,22 +150,72 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Put("/user")
+  @UseInterceptors(
+    FileInterceptor("avatar", {
+      storage: diskStorage({
+        destination: "./uploads/avatars",
+        filename: (req, file, callback) => {
+          const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          const ext = path.extname(file.originalname);
+          callback(null, `avatar-${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
   @ApiOperation({ summary: "Update user data" })
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    type: updateDto,
+  })
   @ApiResponse({
     status: 200,
     description: "User data updated successfully",
   })
-  async updateUser(@Req() req, @Body() updateDto: updateDto) {
+  async updateUser(
+    @Req() req,
+    @Body() updateDto: updateDto,
+    @Res({ passthrough: true }) res: Response,
+    @UploadedFile() avatar?: Express.Multer.File,
+  ) {
     const token = req.cookies.token;
     const decoded = this.jwtService.decode(token);
 
-    const { name } = updateDto;
+    if (!decoded || typeof decoded !== "object" || !decoded.email) {
+      throw new NotFoundException("User not authenticated");
+    }
 
+    const { name } = updateDto;
+    const avatarUrl = avatar
+      ? `/uploads/avatars/${avatar.filename}`
+      : undefined;
+
+    // Update user data
     const user = await this.usersService.updateUserByEmail(decoded.email, {
       name,
+      avatar: avatarUrl,
     });
 
-    return user;
+    // Generate a new token
+    const newPayload = {
+      name: user.name,
+      email: decoded.email,
+      avatar: avatarUrl,
+    };
+
+    const newToken = this.jwtService.sign(newPayload);
+
+    // Clear the old token and set the new one
+    res.clearCookie("token");
+    res.cookie("token", newToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+
+    return new SuccessException({
+      message: "User data and token updated successfully",
+      data: user,
+    });
   }
 
   @UseGuards(AuthGuard)

@@ -51,6 +51,7 @@ export class UsersService {
       name: string;
       email: string;
       password: string;
+      avatar?: string;
     };
     statusCode?: number;
   }> {
@@ -101,7 +102,11 @@ export class UsersService {
       data: user,
     });
   }
-  async updateUserByEmail(userEmail: string, data: { name: string }) {
+
+  async updateUserByEmail(
+    userEmail: string,
+    data: { name: string; avatar?: string },
+  ) {
     if (!userEmail) {
       throw new BadRequestException("ایمیل مورد نظر موجود نمی باشد");
     }
