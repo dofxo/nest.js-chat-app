@@ -20,49 +20,81 @@ export class SocketService {
     this.io.on("connection", (socket) => {
       const rawCookie = socket.handshake.headers.cookie || "";
       const parsedCookies = cookie.parse(rawCookie);
-
       const token = parsedCookies.token;
 
       // listens for new message
       this.newMessage(socket, token);
 
-      // listens for typings
+      // listens for typing status
       this.isTypingStatus(socket, token);
+
+      // listens for joining a room
+      this.joinRoom(socket, token);
+
+      // listens for leaving a room
+      this.leaveRoom(socket, token);
     });
   }
 
+  // Utility function to get the username from the token
+  private getUsername(token: string): string {
+    if (token) {
+      const decoded = this.jwtService.decode(token) as { name: string };
+      return decoded.name;
+    } else {
+      return "Anonymous";
+    }
+  }
+
   isTypingStatus(socket: any, token: string) {
-    socket.on("typing", () => {
-      let name: string;
+    socket.on("typing", (room: string) => {
+      const name = this.getUsername(token);
 
-      if (token) {
-        name = this.jwtService.decode(token).name;
-      } else {
-        name = "Anonymous";
+      if (room) {
+        // Emit typing status to the specified room
+        socket.to(room).emit("typing", { username: name });
       }
+    });
+  }
 
-      // Send user typing status
-      socket.broadcast.emit("typing", {
+  newMessage(socket: any, token: string) {
+    socket.on("message", (data: any) => {
+      const { room, message } = data;
+      const name = this.getUsername(token);
+
+      // Send incoming message to all clients in the room except the sender
+      socket.to(room).emit("message", {
+        message,
+        date: new Date(),
         username: name,
       });
     });
   }
 
-  newMessage(socket: any, token: string) {
-    socket.on("message", (message: any) => {
-      let name: string;
+  joinRoom(socket: any, token: string) {
+    socket.on("joinRoom", (room: string) => {
+      const name = this.getUsername(token);
 
-      if (token) {
-        name = this.jwtService.decode(token).name;
-      } else {
-        name = "Anonymous";
-      }
+      // Add the user to the specified room
+      socket.join(room);
 
-      // Send incoming message to all clients except the sender
-      socket.broadcast.emit("message", {
-        message,
-        date: new Date(),
+      // Notify others in the room about the new user
+      socket.to(room).emit("userJoined", {
         username: name,
+      });
+    });
+  }
+
+  leaveRoom(socket: any, token: string) {
+    socket.on("leaveRoom", (room: string) => {
+      const name = this.getUsername(token);
+
+      // Remove user from the room
+      socket.leave(room);
+
+      // Notify others in the room about the user leaving
+      socket.to(room).emit("userLeft", {
+        name,
       });
     });
   }
