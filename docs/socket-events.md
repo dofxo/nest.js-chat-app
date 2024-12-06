@@ -15,10 +15,14 @@ This event is triggered when a user sends a message. The server broadcasts the m
 ### Expected Payload:
 
 ```json
-"Hello, World!"
+{
+  "room": "room1",
+  "message": "Hello, World!"
+}
 ```
 
-- `message`: The content of the message sent by the user. Only the message string is needed—no need to include any additional data like the token.
+- `room`: The name of the room where the message is being sent.
+- `message`: The content of the message sent by the user.
 
 ### Server Response:
 
@@ -30,7 +34,7 @@ This event is triggered when a user sends a message. The server broadcasts the m
 }
 ```
 
-- `username`: Name of the user sending the message (decoded from JWT token).
+- `username`: The name of the user sending the message (decoded from the JWT token).
 - `date`: The timestamp of when the message was sent.
 
 ---
@@ -59,7 +63,47 @@ This event is triggered when a user starts typing. The server broadcasts the typ
 }
 ```
 
-- `username`: Name of the user who is typing (decoded from JWT token).
+- `username`: The name of the user who is typing (decoded from the JWT token).
+
+---
+
+## 3. **User Joined Event**
+
+**Event Name:** `userJoined`
+
+### Description:
+
+This event is triggered when a user joins a room. The server broadcasts the new user to all other connected clients in the room.
+
+### Server Response:
+
+```json
+{
+  "username": "UserName"
+}
+```
+
+- `username`: The name of the user who has joined the room.
+
+---
+
+## 4. **User Left Event**
+
+**Event Name:** `userLeft`
+
+### Description:
+
+This event is triggered when a user leaves a room. The server broadcasts the user leaving to all other connected clients in the room.
+
+### Server Response:
+
+```json
+{
+  "name": "UserName"
+}
+```
+
+- `name`: The name of the user who has left the room.
 
 ---
 
@@ -71,11 +115,11 @@ To send a message, connect to the WebSocket server and emit the `message` event 
 const socket = io("http://localhost:3000", {
   withCredentials: true, // Allow cookies to be sent with the connection
 });
-socket.emit("message", "Hello, World!"); // Only message string is needed
+socket.emit("message", { room: "room1", message: "Hello, World!" }); // Only message and room name are needed
 ```
 
 **Server Response**:
-The server will broadcast the message to all other clients, which will receive:
+The server will broadcast the message to all other clients in the room, which will receive:
 
 ```json
 {
@@ -104,5 +148,49 @@ The server will broadcast the typing status to all other clients, which will rec
 ```json
 {
   "username": "UserName"
+}
+```
+
+---
+
+## Example: Joining a Room
+
+To join a room, connect to the WebSocket server and emit the `joinRoom` event:
+
+```js
+const socket = io("http://localhost:3000", {
+  withCredentials: true, // Allow cookies to be sent with the connection
+});
+socket.emit("joinRoom", "room1");
+```
+
+**Server Response**:
+The server will broadcast the new user joining to all other clients in the room:
+
+```json
+{
+  "username": "UserName"
+}
+```
+
+---
+
+## Example: Leaving a Room
+
+To leave a room, connect to the WebSocket server and emit the `leaveRoom` event:
+
+```js
+const socket = io("http://localhost:3000", {
+  withCredentials: true, // Allow cookies to be sent with the connection
+});
+socket.emit("leaveRoom", "room1");
+```
+
+**Server Response**:
+The server will broadcast the user leaving to all other clients in the room:
+
+```json
+{
+  "name": "UserName"
 }
 ```
