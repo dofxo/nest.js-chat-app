@@ -36,12 +36,12 @@ export class UsersService {
       const newUser = new this.userModel({ name, password, email });
       newUser.save();
       return new SuccessException({
-        message: "کاربر با موفقیت ساخته شد",
+        message: "User successfully created",
         statusCode: 201,
         data: newUser,
       });
     } else {
-      return new ConflictException("کاربر از قبل وجود دارد");
+      return new ConflictException();
     }
   }
 
@@ -63,16 +63,16 @@ export class UsersService {
 
       // check for password matching
       if (!passwordMatchToHashedVersion(password, userPassword)) {
-        return new NotFoundException("اطاعات وارد شده صحیح نمی باشد");
+        return new NotFoundException();
       }
 
       return new SuccessException({
-        message: "کاربر با موفقیت وارد شد",
+        message: "User logged in successfully",
         statusCode: 201,
         data: user,
       });
     } else {
-      return new NotFoundException("کاربری با این اطلاعات وجود ندارد");
+      return new NotFoundException();
     }
   }
 
@@ -80,7 +80,7 @@ export class UsersService {
     const users = await this.userModel.find();
 
     return new SuccessException({
-      message: "کاربران با موفقیت دریافت شدند",
+      message: "User fetched successfully",
       statusCode: 200,
       data: users,
     });
@@ -88,7 +88,7 @@ export class UsersService {
 
   async getUserByEmail(userEmail: string) {
     if (!userEmail) {
-      throw new BadRequestException("ایمیل مورد نظر موجود نمی باشد");
+      throw new BadRequestException("Email not found");
     }
 
     const user = await this.userModel.findOne({ email: userEmail });
@@ -97,7 +97,7 @@ export class UsersService {
       throw new NotFoundException("User Not Found");
     }
     return new SuccessException({
-      message: "کاربر با موفقیت دریافت شد",
+      message: "User fetched successfully",
       statusCode: 200,
       data: user,
     });
@@ -108,12 +108,12 @@ export class UsersService {
     data: { name: string; avatar?: string },
   ) {
     if (!userEmail) {
-      throw new BadRequestException("ایمیل مورد نظر موجود نمی باشد");
+      throw new BadRequestException("Email not found");
     }
     await this.userModel.updateOne({ email: userEmail }, data);
 
     return new SuccessException({
-      message: "اطلاعات کاربر با موفقیت آپدیت شد",
+      message: "User info updated successfully",
       statusCode: 200,
     });
   }
@@ -128,7 +128,7 @@ export class UsersService {
       throw new NotFoundException("User Not Found");
     }
     return new SuccessException({
-      message: "کاربر با موفقیت حذف شد",
+      message: "User deleted successfully",
       statusCode: 200,
     });
   }

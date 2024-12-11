@@ -115,9 +115,11 @@ export class UsersController {
   logout(@Res() res: Response, @Req() req) {
     if (req.cookies.token) {
       res.clearCookie("token");
-      res.send(new SuccessException({ message: "کاربر با موفقیت خارج شد" }));
+      res.send(
+        new SuccessException({ message: "User logged out successfully" }),
+      );
     } else {
-      res.send(new NotFoundException("کاربری وارد حساب کاربری خود نشده است"));
+      res.send(new NotFoundException());
     }
   }
 

@@ -4,23 +4,23 @@ import { MatchPasswordsConstraint } from "src/validators";
 
 export default class signUpDto {
   @ApiProperty({ example: "mahmood" })
-  @IsString({ message: "نام باید رشته باشد" })
-  @IsNotEmpty({ message: "نام نباید خالی باشد" })
+  @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiProperty({ example: "mahmood@gmail.com" })
-  @IsNotEmpty({ message: "ایمیل نباید خالی باشد" })
-  @IsEmail({}, { message: "فرمت ایمیل اشتباه می باشد" })
+  @IsNotEmpty()
+  @IsEmail()
   email: string;
 
   @ApiProperty({ example: "1234mkmkmk" })
-  @IsString({ message: "پسوورد باید رشته باشد" })
-  @IsNotEmpty({ message: "داشتن پسوورد الزامی است" })
+  @IsString()
+  @IsNotEmpty()
   password: string;
 
   @ApiProperty({ example: "1234mkmkmk" })
-  @IsString({ message: "پسوورد باید رشته باشد" })
-  @IsNotEmpty({ message: "داشتن پسوورد الزامی است" })
+  @IsString()
+  @IsNotEmpty()
   @Validate(MatchPasswordsConstraint)
   confirmPassword: string;
 }
